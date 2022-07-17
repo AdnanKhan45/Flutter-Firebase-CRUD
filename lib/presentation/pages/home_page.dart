@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_firebase_crud/data/models/user_model.dart';
+import 'package:flutter_firebase_crud/data/remote_data_source/firestore_helper.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -49,7 +51,8 @@ class _HomePageState extends State<HomePage> {
               SizedBox(height: 10,),
               InkWell(
                 onTap: () {
-                  _create();
+                  FirestoreHelper.create(UserModel(username: _usernameController.text, age: _ageController.text));
+                  // _create();
                 },
                 child: Container(
                   width: 100,
@@ -76,6 +79,42 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
               ),
+              SizedBox(height: 10,),
+              StreamBuilder<List<UserModel>>(
+                stream: FirestoreHelper.read(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator(),);
+                  }
+                  if (snapshot.hasError) {
+                    return Center(child: Text("some error occured"),);
+                  }
+                  if (snapshot.hasData) {
+                    final userData = snapshot.data;
+                    return Expanded(
+                      child: ListView.builder(itemCount: userData!.length,itemBuilder: (context, index) {
+                        final singleUser = userData[index];
+                        return Container(
+                          margin: EdgeInsets.symmetric(vertical: 5),
+                          child: ListTile(
+                            leading: Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                  color: Colors.deepPurple,
+                                  shape: BoxShape.circle
+                              ),
+                            ),
+                            title: Text("${singleUser.username}"),
+                            subtitle: Text("${singleUser.age}"),
+                          ),
+                        );
+                      }),
+                    );
+                  }
+                  return Center(child: CircularProgressIndicator(),);
+                }
+              )
             ],
           ),
         ),
@@ -83,16 +122,16 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Future _create() async {
-    final userCollection = FirebaseFirestore.instance.collection("users");
-
-    final docRef = userCollection.doc();
-
-    await docRef.set({
-      "username": _usernameController.text,
-      "age": _ageController.text
-    });
-
-
-  }
+  // Future _create() async {
+  //   final userCollection = FirebaseFirestore.instance.collection("users");
+  //
+  //   final docRef = userCollection.doc();
+  //
+  //   await docRef.set({
+  //     "username": _usernameController.text,
+  //     "age": _ageController.text
+  //   });
+  //
+  //
+  // }
 }
